@@ -45,11 +45,11 @@ TagManager:
   - name: Enemy
     uniqueID: 2513786247
     locked: 0
-  - name: Player
-    uniqueID: 3726553853
-    locked: 0
   - name: Prop
     uniqueID: 4032106699
+    locked: 0
+  - name: Player
+    uniqueID: 3726553853
     locked: 0
   - name: Ground
     uniqueID: 2207457075
