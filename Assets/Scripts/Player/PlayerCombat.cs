@@ -151,21 +151,27 @@ public class PlayerCombat : MonoBehaviour
     void CheckAttack(float damageMultiplier, float attackAnimFull, bool groundAttack = true)
     {
         float damageDealt = attackDamage * damageMultiplier;
-        
+
         //if (damageMultiplier > 1) knockbackStrength = 6; //TODO: set variable defintion in Inspector
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
 
-        /*foreach (Collider2D player in hitEnemies)
+        foreach (Collider2D enemy in hitEnemies)
         {
-            if (player.GetComponent<Base_EnemyCombat>() != null)
+            if (enemy.GetComponent<BoxCollider2D>() != null && enemy.GetComponent<Rigidbody2D>())
             {
-                player.GetComponent<Base_EnemyCombat>().TakeDamage(damageDealt, true, knockbackStrength);
-                HitStopAnim(attackAnimFull, groundAttack);
+                if(movement.isFacingRight)
+                    enemy.GetComponent<BoxCollider2D>().attachedRigidbody.AddForce(Vector3.right*2f, ForceMode2D.Impulse);
+                else
+                    enemy.GetComponent<BoxCollider2D>().attachedRigidbody.AddForce(Vector3.left*2f, ForceMode2D.Impulse);
 
-                if (isAirAttacking) movement.Float(.3f);
+                    //TakeDamage(damageDealt, true, knockbackStrength);
+                //HitStopAnim(attackAnimFull, groundAttack);
+
+                //if (isAirAttacking) movement.Float(.3f);
                 //ScreenShakeListener.Instance.Shake(1); //TODO: if Crit
                 //hitStop.Stop(.1f); //Successful hit
             }
-        }*/
+        }
     }
 
     /*void HitStopAnim(float attackAnimFull, bool ground)

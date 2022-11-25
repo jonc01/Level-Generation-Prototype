@@ -114,7 +114,6 @@ public class PlayerMovement : MonoBehaviour
         {
             if (Input.GetButtonDown("Crouch"))
             {
-                Debug.Log("Crouching");
                 //Allow dropping through platforms
                 if (!canDropThrough) return;
                 if (currentOneWayPlatform != null)

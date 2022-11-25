@@ -20,9 +20,9 @@ public class RoomGenerator : MonoBehaviour
     [SerializeField] GameObject[] Shops;
 
     [SerializeField] bool shopAdded; //Shop Types: General, Attack Items, Defense Items, Healing Items
+    
 
-
-    void Start()
+    private void Start()
     {
         shopAdded = false;
 
@@ -33,8 +33,8 @@ public class RoomGenerator : MonoBehaviour
         
     }
 
-    void ShopCheck()
+    private void Move()
     {
-        
+        //
     }
 }
