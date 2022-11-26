@@ -60,9 +60,10 @@
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerCombat.cs" />
     <Compile Include="Assets\Scripts\Player\AnimatorManager.cs" />
-    <Compile Include="Assets\Scripts\RoomGenerator.cs" />
+    <Compile Include="Assets\Scripts\LevelGen\RoomGenerator.cs" />
     <Compile Include="Assets\Scripts\DoorSwitch.cs" />
     <Compile Include="Assets\Scripts\MovingPlatform.cs" />
+    <Compile Include="Assets\Scripts\LevelGen\RoomManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
