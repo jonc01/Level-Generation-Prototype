@@ -11,50 +11,78 @@ public class RoomGenerator : MonoBehaviour
     [SerializeField] LayerMask roomLayer;
     [SerializeField] bool DEBUGGING = true;
 
-    [Header("Direction Bias")] //Must be 100% total, can adjust to bias different map shapes
+    /*[Header("Direction Bias")] //Must be 100% total, can adjust to bias different map shapes
     [SerializeField] float botChance = .25f;
     [SerializeField] float topChance = .25f;
     [SerializeField] float leftChance = .25f;
-    [SerializeField] float rightChance = .25f;
+    [SerializeField] float rightChance = .25f;*/
 
     [Space(10)]
     [Header("Generator Components")]
-    [SerializeField] GameObject[] Walls; //0: Bot, 1: Top, 2: Left, 3: Right
-    [SerializeField] GameObject[] Doors; //0: Bot, 1: Top, 2: Left, 3: Right
-    [SerializeField] GameObject[] PlatformGroups;
+    [SerializeField] GameObject[] StartRooms;
+    [SerializeField] GameObject[] Rooms; //Platforms and Room Collider
     [SerializeField] GameObject[] Shops;
 
-    [Header("")]
-    [SerializeField] GameObject[] GeneratedRooms;
+    [Header("----------")]
+    public GameObject[] GeneratedRooms; //Starting room at [0]
 
     [Header("Variables")]
     [SerializeField] bool shopAdded; //Shop Types: General, Attack Items, Defense Items, Healing Items
 
     private bool roomGenRunning;
-    private bool wallGenRunning;
     //
     RaycastHit2D checkUp;
     RaycastHit2D checkLeft;
     RaycastHit2D checkDown;
     RaycastHit2D checkRight;
     //
-    private bool roomFoundUp;
-    private bool roomFoundLeft;
-    private bool roomFoundDown;
-    private bool roomFoundRight;
+    [SerializeField] private bool roomFoundUp;
+    [SerializeField] private bool roomFoundLeft;
+    [SerializeField] private bool roomFoundDown;
+    [SerializeField] private bool roomFoundRight;
 
+
+    private void Awake()
+    {
+    }
 
     private void Start()
     {
         shopAdded = false; //Example
+        GeneratedRooms = new GameObject[totalRooms];
+        Builder = GetComponent<Transform>();
         GenerateRooms();
     }
 
     void Update()
     {
         if (DEBUGGING) DebugRaycast();
+        if (DEBUGGING)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                DeleteRooms();
+            }
+
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                //ExistingRoomCheck();
+            }
+        } 
         //if (!roomGenRunning) return;
         RoomConnectCheck();
+    }
+
+    private void DeleteRooms() //DEBUGGING
+    {
+        Builder.position = new Vector3(0, 0, 0);
+
+        for(int i = 0; i < GeneratedRooms.Length; i++)
+        {
+            Destroy(GeneratedRooms[i]);
+        }
+
+        GenerateRooms();
     }
 
     void GenerateRooms()
@@ -62,17 +90,33 @@ public class RoomGenerator : MonoBehaviour
         roomGenRunning = true;
         for(int i = 0; i < totalRooms; i++)
         {
-
-            int randPlatforms = Random.Range(0, 4);
-            Instantiate(PlatformGroups[randPlatforms], Builder.position, Quaternion.identity);
-            Move();
+            if(i > 0)
+            {
+                Move();
+                int randPlatforms = Random.Range(0, 4);
+                GeneratedRooms[i] = Instantiate
+                    (Rooms[randPlatforms], Builder.position, Quaternion.identity) as GameObject;
+            }
+            else
+            {
+                int startRoom = Random.Range(0, StartRooms.Length);
+                GeneratedRooms[i] = Instantiate(StartRooms[startRoom]);
+            }
         }
         roomGenRunning = false;
+        
     }
 
     private void Move()
     {
-        int direction = Random.Range(0, 4); //excludes 4, only 0, 1, 2, 3
+        //int direction = Random.Range(0, 4); //0, 1, 2, 3
+        int direction = ExistingRoomCheck();
+
+        if(direction == -1) //-1 is being returned when it shouldn't
+        {
+            Debug.Log("Should pick a different room");
+            //PickRandomRoom(); //TODO: needs testing
+        }
         //   0 +Y 
         //1 -X  3 +X
         //   2 -Y
@@ -94,32 +138,54 @@ public class RoomGenerator : MonoBehaviour
                 Builder.position = new Vector3(x += 5, y, 0);
                 break;
             default:
-                Debug.Log("");
+                Debug.Log("Error in Move() Random.Range");
                 break;
         }
-        WallDoorCheck();
-    }
-
-    private int Rotate()
-    {
-        //     0 up
-        //1 left + 3 right
-        //    2 down
-
-        /*int direction = Random.Range(0, 4);
-        switch (direction)
-        {
-            case 0:
-                return 0;
-            case 1:
-                return 1;
-            default:
-                break;
-        }*/
-        return 0;
+        //WallDoorCheck();
     }
     
-    void WallDoorCheck()
+    private int ExistingRoomCheck()
+    {
+        //Builder picks a random direction, if room exists, pick another direction.
+        //Return all open directions, random.range from remaining directions.
+        //If a room is surrounded, then move Builder to a previous room, and check for opening.
+
+        List<int> openDirections = new List<int>();
+        if (!roomFoundUp)
+        {
+            //openDirections.Capacity++;
+            openDirections.Add(0);
+        }
+        if (!roomFoundLeft)
+        {
+            //openDirections.Capacity++;
+            openDirections.Add(1);
+        }
+        if (!roomFoundDown)
+        {
+            //openDirections.Capacity++;
+            openDirections.Add(2);
+        }
+        if (!roomFoundRight)
+        {
+            //openDirections.Capacity++;
+            openDirections.Add(3);
+        }
+        Debug.Log("Rooms Found: " + roomFoundUp + roomFoundLeft + roomFoundDown + roomFoundRight);
+
+        Debug.Log("Directions Count: " + openDirections.Count);
+        Debug.Log("Directions Capacity: " + openDirections.Capacity);
+        if(openDirections.Count > 0)
+        {
+            int j = Random.Range(0, openDirections.Count); //
+            Debug.Log("Selected Direction: " + openDirections[j]);
+            return openDirections[j];
+        }
+        Debug.Log("No open directions. " + openDirections.Count);
+        return -1;
+    }
+
+    /*void WallDoorCheck()
     {
         //TODO: This should be run after all rooms/platforms are done being added first
         //TODO: Add all rooms into an array of transform positions, iterate through positions
@@ -156,9 +222,9 @@ public class RoomGenerator : MonoBehaviour
             if (RoomRight != null) GenerateDoor(3);
         }
         else GenerateWall(3);
-    }
+    }*/
 
-    void GenerateWall(int direction) //TODO: move to new script? WallGenerator.cs
+    /*void GenerateWall(int direction) //TODO: move to new script? WallGenerator.cs
     {
         float x = Builder.position.x;
         float y = Builder.position.y;
@@ -182,9 +248,9 @@ public class RoomGenerator : MonoBehaviour
         }
         Vector3 newPos = new Vector3(x, y, 0);
 
-        Instantiate(Walls[direction], newPos, Quaternion.identity);
+        Instantiate(Walls[direction], newPos, Quaternion.identity);//, Rooms[i].transform);
 
-        /*
+        *//*
         int randWall = Random.Range(0, 3); //If adding door location variants
         switch (direction)
         {
@@ -194,10 +260,10 @@ public class RoomGenerator : MonoBehaviour
             case 1:
                 Instantiate(LeftWalls[randWall], Builder.position, Quaternion.identity);
                 break; ...
-        */
-    }
+        *//*
+    }*/
 
-    void GenerateDoor(int direction) //TODO: move to new script?
+    /*void GenerateDoor(int direction) //TODO: move to new script?
     {
         float x = Builder.position.x;
         float y = Builder.position.y;
@@ -221,6 +287,11 @@ public class RoomGenerator : MonoBehaviour
         Vector3 newPos = new Vector3(x, y, 0);
 
         Instantiate(Doors[direction], newPos, Quaternion.identity);
+    }*/
+
+    private int PickRandomRoom()
+    {
+        return Random.Range(0, GeneratedRooms.Length);
     }
 
     private void RoomConnectCheck()
