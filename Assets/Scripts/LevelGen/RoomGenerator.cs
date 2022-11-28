@@ -7,7 +7,6 @@ public class RoomGenerator : MonoBehaviour
     [Header("Setup")]
     [SerializeField] Vector3 startingRoom;
     [SerializeField] int totalRooms;
-    [SerializeField] Transform Builder;
     [SerializeField] LayerMask roomLayer;
     [SerializeField] bool DEBUGGING = true;
 
@@ -41,6 +40,8 @@ public class RoomGenerator : MonoBehaviour
     [SerializeField] private bool roomFoundDown;
     [SerializeField] private bool roomFoundRight;
 
+    private int currRoom;
+
 
     private void Awake()
     {
@@ -50,7 +51,6 @@ public class RoomGenerator : MonoBehaviour
     {
         shopAdded = false; //Example
         GeneratedRooms = new GameObject[totalRooms];
-        Builder = GetComponent<Transform>();
         GenerateRooms();
     }
 
@@ -59,14 +59,20 @@ public class RoomGenerator : MonoBehaviour
         if (DEBUGGING) DebugRaycast();
         if (DEBUGGING)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.J))
             {
                 DeleteRooms();
             }
 
             if (Input.GetKeyDown(KeyCode.I))
             {
+                GetNewRandomRoom();
                 //ExistingRoomCheck();
+                /*int i = Random.Range(0, GeneratedRooms.Length);
+                Debug.Log("Random Room: " + GeneratedRooms[i].name);
+                Debug.Log("Room Transform: " + GeneratedRooms[i].transform.position);*/
+                //float x = GeneratedRooms[i].gameObject.transform.position.x;
+                //float y = GeneratedRooms[i].gameObject.transform.position.y;
             }
         } 
         //if (!roomGenRunning) return;
@@ -75,17 +81,23 @@ public class RoomGenerator : MonoBehaviour
 
     private void DeleteRooms() //DEBUGGING
     {
-        Builder.position = new Vector3(0, 0, 0);
+        transform.position = new Vector3(0, 0, 0);
 
-        for(int i = 0; i < GeneratedRooms.Length; i++)
+        for (int i = 0; i < GeneratedRooms.Length; i++)
         {
             Destroy(GeneratedRooms[i]);
+            //GeneratedRooms.
         }
-
-        GenerateRooms();
+        Debug.Log("Deleted Rooms length: " + GeneratedRooms.Length);
+        Invoke("GenerateRooms", .5f);
     }
 
     void GenerateRooms()
+    {
+        StartCoroutine(GenerateRoomsCO());
+    }
+
+    IEnumerator GenerateRoomsCO()
     {
         roomGenRunning = true;
         for(int i = 0; i < totalRooms; i++)
@@ -93,49 +105,87 @@ public class RoomGenerator : MonoBehaviour
             if(i > 0)
             {
                 Move();
-                int randPlatforms = Random.Range(0, 4);
-                GeneratedRooms[i] = Instantiate
-                    (Rooms[randPlatforms], Builder.position, Quaternion.identity) as GameObject;
+                yield return new WaitForSeconds(.5f);
+                int randRoom = Random.Range(0, 4);
+                GeneratedRooms[i] = Instantiate(Rooms[randRoom], transform.position, Quaternion.identity);
             }
             else
             {
                 int startRoom = Random.Range(0, StartRooms.Length);
-                GeneratedRooms[i] = Instantiate(StartRooms[startRoom]);
+                GeneratedRooms[i] = Instantiate(StartRooms[startRoom], transform.position, Quaternion.identity);
+                yield return new WaitForSeconds(.5f); //0.001
             }
         }
         roomGenRunning = false;
-        
     }
 
     private void Move()
     {
+        StartCoroutine(MoveCO());
+    }
+
+    private int TESTNUM() //TODO: TEMP
+    {
+        int i = 0;
+        while(GeneratedRooms[i] == null)
+            i++;
+
+        return i;
+    }
+
+    IEnumerator MoveCO()
+    {
         //int direction = Random.Range(0, 4); //0, 1, 2, 3
         int direction = ExistingRoomCheck();
+        yield return new WaitForSeconds(.1f);
 
-        if(direction == -1) //-1 is being returned when it shouldn't
-        {
-            Debug.Log("Should pick a different room");
-            //PickRandomRoom(); //TODO: needs testing
+        //if(direction == -1 /*|| direction == 0*/) //-1 is being returned when no openings are found
+        //{
+
+        //currRoom = 0;
+        while (direction == -1)// || direction == 0)
+        { 
+            Debug.Log("1 - Picking different room ...");
+            yield return new WaitForSeconds(.25f);
+
+            int currRoom = TESTNUM(); //TODO: TEMP 
+
+            Debug.Log("Random Room: " + GeneratedRooms[currRoom].name + " at " + GeneratedRooms[currRoom].transform.position);
+            Vector3 newPos = GeneratedRooms[currRoom].transform.position;
+
+            transform.position = newPos;
+            Debug.Log("2 - Trying again...");
+            
+            yield return new WaitForSeconds(0.25f);
+            direction = ExistingRoomCheck();
+
+            yield return null;
         }
-        //   0 +Y 
+        
+        
+        //   0 +Y
         //1 -X  3 +X
         //   2 -Y
-        float x = Builder.position.x;
-        float y = Builder.position.y;
+        float x = transform.position.x;
+        float y = transform.position.y;
 
         switch (direction)
         {
             case 0: //Up
-                Builder.position = new Vector3(x, y += 3, 0);
+                Debug.Log("0: Up");
+                transform.position = new Vector3(x, y += 3, 0);
                 break;
             case 1: //Left
-                Builder.position = new Vector3(x -= 5, y, 0);
+                Debug.Log("1: Left");
+                transform.position = new Vector3(x -= 5, y, 0);
                 break;
             case 2: //Down
-                Builder.position = new Vector3(x, y -= 3, 0);
+                Debug.Log("2: Down");
+                transform.position = new Vector3(x, y -= 3, 0);
                 break;
             case 3: //Right
-                Builder.position = new Vector3(x += 5, y, 0);
+                Debug.Log("3: Right");
+                transform.position = new Vector3(x += 5, y, 0);
                 break;
             default:
                 Debug.Log("Error in Move() Random.Range");
@@ -151,156 +201,59 @@ public class RoomGenerator : MonoBehaviour
         //If a room is surrounded, then move Builder to a previous room, and check for opening.
 
         List<int> openDirections = new List<int>();
-        if (!roomFoundUp)
-        {
-            //openDirections.Capacity++;
-            openDirections.Add(0);
-        }
-        if (!roomFoundLeft)
-        {
-            //openDirections.Capacity++;
-            openDirections.Add(1);
-        }
-        if (!roomFoundDown)
-        {
-            //openDirections.Capacity++;
-            openDirections.Add(2);
-        }
-        if (!roomFoundRight)
-        {
-            //openDirections.Capacity++;
-            openDirections.Add(3);
-        }
+        if (!roomFoundUp) openDirections.Add(0);
+        if (!roomFoundLeft) openDirections.Add(1);
+        if (!roomFoundDown) openDirections.Add(2);
+        if (!roomFoundRight) openDirections.Add(3);
+        
         Debug.Log("Rooms Found: " + roomFoundUp + roomFoundLeft + roomFoundDown + roomFoundRight);
 
-        Debug.Log("Directions Count: " + openDirections.Count);
-        Debug.Log("Directions Capacity: " + openDirections.Capacity);
+        /*for(int i=0; i<openDirections.Count; i++)
+        {
+            Debug.Log("Direction: " + openDirections[i]);
+        }*/
+
         if(openDirections.Count > 0)
         {
             int j = Random.Range(0, openDirections.Count); //
-            Debug.Log("Selected Direction: " + openDirections[j]);
-            return openDirections[j];
+            int dir = openDirections[j];
+            Debug.Log("Selected Direction: " + dir);
+            openDirections.Clear();
+            return dir;
         }
         Debug.Log("No open directions. " + openDirections.Count);
+        //GetNewRandomRoom();
         return -1;
     }
 
-    /*void WallDoorCheck()
+    private void GetNewRandomRoom()
     {
-        //TODO: This should be run after all rooms/platforms are done being added first
-        //TODO: Add all rooms into an array of transform positions, iterate through positions
-        //      to run WallDoorCheck()
-        //TODO: Add bool Raycast check then run this vv RaycastHit2D object
-        if (roomFoundUp)
-        {
-            checkUp = Physics2D.Raycast(Builder.position, Vector3.up, 3f, roomLayer);
-            var RoomUp = checkUp.transform.gameObject.GetComponent<RoomManager>();
-            if (RoomUp != null) GenerateDoor(0);
-        }
-        else GenerateWall(0);
+        currRoom++;
+        StartCoroutine(MoveToRandomRoomCO());
+    }
 
-        if (roomFoundLeft)
-        {
-            checkLeft = Physics2D.Raycast(Builder.position, Vector3.left, 5f, roomLayer);
-            var RoomLeft = checkLeft.transform.gameObject.GetComponent<RoomManager>();
-            if (RoomLeft != null) GenerateDoor(1);
-        }
-        else GenerateWall(1);
-
-        if (roomFoundDown)
-        {
-            checkDown = Physics2D.Raycast(Builder.position, Vector3.down, 3f, roomLayer);
-            var RoomDown = checkDown.transform.gameObject.GetComponent<RoomManager>();
-            if (RoomDown != null) GenerateDoor(2);
-        }
-        else GenerateWall(2);
-
-        if (roomFoundRight)
-        {
-            checkRight = Physics2D.Raycast(Builder.position, Vector3.right, 5f, roomLayer);
-            var RoomRight = checkRight.transform.gameObject.GetComponent<RoomManager>();
-            if (RoomRight != null) GenerateDoor(3);
-        }
-        else GenerateWall(3);
-    }*/
-
-    /*void GenerateWall(int direction) //TODO: move to new script? WallGenerator.cs
+    IEnumerator MoveToRandomRoomCO()
     {
-        float x = Builder.position.x;
-        float y = Builder.position.y;
+        //Pick new room, move to that position, call ExistingRoomcheck again
+        int i = Random.Range(0, GeneratedRooms.Length);
+        Debug.Log("Random Room: " + GeneratedRooms[i].name);
+        Debug.Log("Room Transform: " + GeneratedRooms[i].transform.position);
+        float x = GeneratedRooms[i].transform.position.x;
+        float y = GeneratedRooms[i].transform.position.y;
 
-        switch (direction)
-        {
-            case 0: //Up
-                y += 1.5f;
-                break;
-            case 1: //Left
-                x -= 2.5f;
-                break;
-            case 2: //Down
-                y -= 1.5f;
-                break;
-            case 3: //Right
-                x += 2.5f;
-                break;
-            default:
-                break;
-        }
-        Vector3 newPos = new Vector3(x, y, 0);
+        transform.position = new Vector3(x, y, 0);
 
-        Instantiate(Walls[direction], newPos, Quaternion.identity);//, Rooms[i].transform);
-
-        *//*
-        int randWall = Random.Range(0, 3); //If adding door location variants
-        switch (direction)
-        {
-            case 0: //Up
-                Instantiate(UpWalls[randWall], Builder.position, Quaternion.identity);
-                break;
-            case 1:
-                Instantiate(LeftWalls[randWall], Builder.position, Quaternion.identity);
-                break; ...
-        *//*
-    }*/
-
-    /*void GenerateDoor(int direction) //TODO: move to new script?
-    {
-        float x = Builder.position.x;
-        float y = Builder.position.y;
-
-        switch (direction) {
-            case 0: //Up
-                y += 1.5f;
-                break;
-            case 1: //Left
-                x -= 2.5f;
-                break;
-            case 2: //Down
-                y -= 1.5f;
-                break;
-            case 3: //Right
-                x += 2.5f;
-                break;
-            default:
-                break;
-        }
-        Vector3 newPos = new Vector3(x, y, 0);
-
-        Instantiate(Doors[direction], newPos, Quaternion.identity);
-    }*/
-
-    private int PickRandomRoom()
-    {
-        return Random.Range(0, GeneratedRooms.Length);
+        yield return new WaitForSeconds(0.5f);
+        ExistingRoomCheck();
     }
 
     private void RoomConnectCheck()
     {
         //bools
-        roomFoundUp =  Physics2D.Raycast(Builder.position, Vector3.up, 3f, roomLayer);
-        roomFoundLeft = Physics2D.Raycast(Builder.position, Vector3.left, 5f, roomLayer);
-        roomFoundDown = Physics2D.Raycast(Builder.position, Vector3.down, 3f, roomLayer);
-        roomFoundRight = Physics2D.Raycast(Builder.position, Vector3.right, 5f, roomLayer);
+        roomFoundUp =  Physics2D.Raycast(transform.position, Vector3.up, 3f, roomLayer);
+        roomFoundLeft = Physics2D.Raycast(transform.position, Vector3.left, 5f, roomLayer);
+        roomFoundDown = Physics2D.Raycast(transform.position, Vector3.down, 3f, roomLayer);
+        roomFoundRight = Physics2D.Raycast(transform.position, Vector3.right, 5f, roomLayer);
     }
 
     private void DebugRaycast()
@@ -310,9 +263,9 @@ public class RoomGenerator : MonoBehaviour
         Vector3 down = transform.TransformDirection(Vector3.down) * 3f;
         Vector3 right = transform.TransformDirection(Vector3.right) * 5f;
 
-        Debug.DrawRay(Builder.position, up, Color.green);
-        Debug.DrawRay(Builder.position, left, Color.green);
-        Debug.DrawRay(Builder.position, down, Color.green);
-        Debug.DrawRay(Builder.position, right, Color.green);
+        Debug.DrawRay(transform.position, up, Color.green);
+        Debug.DrawRay(transform.position, left, Color.green);
+        Debug.DrawRay(transform.position, down, Color.green);
+        Debug.DrawRay(transform.position, right, Color.green);
     }
 }

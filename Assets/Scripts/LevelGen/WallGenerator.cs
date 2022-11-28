@@ -5,7 +5,6 @@ using UnityEngine;
 public class WallGenerator : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] Transform Builder;
     [SerializeField] LayerMask roomLayer;
     [SerializeField] Transform[] GeneratedRooms;
 
@@ -26,7 +25,6 @@ public class WallGenerator : MonoBehaviour
 
     private void Start()
     {
-        Builder = GetComponent<Transform>();
         //GeneratedRooms = GameObject.FindGameObjectWithTag("GeneratedRooms").transform;
     }
 
@@ -42,7 +40,7 @@ public class WallGenerator : MonoBehaviour
     private void Move(Vector3 roomPos)
     {
         //Move Builder to position at GeneratedRooms index
-        Builder.position = roomPos;
+        transform.position = roomPos;
     }
 
     void WallDoorCheck(Vector3 roomPos)
@@ -53,7 +51,7 @@ public class WallGenerator : MonoBehaviour
         //TODO: Add bool Raycast check then run this vv RaycastHit2D object
         if (roomFoundUp)
         {
-            checkUp = Physics2D.Raycast(Builder.position, Vector3.up, 3f, roomLayer);
+            checkUp = Physics2D.Raycast(transform.position, Vector3.up, 3f, roomLayer);
             var RoomUp = checkUp.transform.gameObject.GetComponent<RoomManager>();
             if (RoomUp != null) GenerateDoor(0);
         }
@@ -61,7 +59,7 @@ public class WallGenerator : MonoBehaviour
 
         if (roomFoundLeft)
         {
-            checkLeft = Physics2D.Raycast(Builder.position, Vector3.left, 5f, roomLayer);
+            checkLeft = Physics2D.Raycast(transform.position, Vector3.left, 5f, roomLayer);
             var RoomLeft = checkLeft.transform.gameObject.GetComponent<RoomManager>();
             if (RoomLeft != null) GenerateDoor(1);
         }
@@ -69,7 +67,7 @@ public class WallGenerator : MonoBehaviour
 
         if (roomFoundDown)
         {
-            checkDown = Physics2D.Raycast(Builder.position, Vector3.down, 3f, roomLayer);
+            checkDown = Physics2D.Raycast(transform.position, Vector3.down, 3f, roomLayer);
             var RoomDown = checkDown.transform.gameObject.GetComponent<RoomManager>();
             if (RoomDown != null) GenerateDoor(2);
         }
@@ -77,7 +75,7 @@ public class WallGenerator : MonoBehaviour
 
         if (roomFoundRight)
         {
-            checkRight = Physics2D.Raycast(Builder.position, Vector3.right, 5f, roomLayer);
+            checkRight = Physics2D.Raycast(transform.position, Vector3.right, 5f, roomLayer);
             var RoomRight = checkRight.transform.gameObject.GetComponent<RoomManager>();
             if (RoomRight != null) GenerateDoor(3);
         }
@@ -86,8 +84,8 @@ public class WallGenerator : MonoBehaviour
 
     void GenerateWall(int direction)
     {
-        float x = Builder.position.x;
-        float y = Builder.position.y;
+        float x = transform.position.x;
+        float y = transform.position.y;
 
         switch (direction)
         {
@@ -125,8 +123,8 @@ public class WallGenerator : MonoBehaviour
 
     void GenerateDoor(int direction)
     {
-        float x = Builder.position.x;
-        float y = Builder.position.y;
+        float x = transform.position.x;
+        float y = transform.position.y;
 
         switch (direction)
         {

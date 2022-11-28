@@ -6287,16 +6287,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startingRoom: {x: 0, y: 0, z: 0}
-  totalRooms: 5
-  Builder: {fileID: 1396609926}
+  totalRooms: 10
   roomLayer:
     serializedVersion: 2
     m_Bits: 512
   DEBUGGING: 1
-  botChance: 0.25
-  topChance: 0.25
-  leftChance: 0.25
-  rightChance: 0.25
   StartRooms:
   - {fileID: 1446400913}
   Rooms:
@@ -6307,6 +6302,10 @@ MonoBehaviour:
   Shops: []
   GeneratedRooms: []
   shopAdded: 0
+  roomFoundUp: 0
+  roomFoundLeft: 0
+  roomFoundDown: 0
+  roomFoundRight: 0
 --- !u!114 &1396609928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6319,7 +6318,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f51da6d026dccad4287dfe4614d0c6c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Builder: {fileID: 0}
   roomLayer:
     serializedVersion: 2
     m_Bits: 512
