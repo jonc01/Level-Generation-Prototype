@@ -54,6 +54,10 @@ public class PlayerMovement : MonoBehaviour
     private float originalGravity;
     //Coroutine DashCO;
 
+    //Double Jump
+    [SerializeField] private bool canDoubleJump;
+    [SerializeField] private bool doubleJumped;
+
     //Float
     [SerializeField] bool isFloating;
     Coroutine FloatCO;
@@ -62,6 +66,8 @@ public class PlayerMovement : MonoBehaviour
     {
         playerCollider = GetComponent<BoxCollider2D>();
 
+        canDoubleJump = false;
+        doubleJumped = false;
         allowInput = true;
         canMove = true;
         canAirMove = true;
@@ -97,12 +103,16 @@ public class PlayerMovement : MonoBehaviour
         Flip();
 
         //Variable jump heights
-        if (Input.GetButtonDown("Jump") && !jumped)
+        if (Input.GetButtonDown("Jump"))
         {
-            if (IsGrounded() || coyoteAllowed)
+            if (!jumped)
             {
-                jumped = true;
-                rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                if (IsGrounded() || coyoteAllowed)
+                {
+                    jumped = true;
+                    rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                    canDoubleJump = true;
+                }
             }
         }
         if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
@@ -110,8 +120,19 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
         }
 
+        //Double Jump
+        if (canDoubleJump && !doubleJumped)
+        {
+            if (Input.GetButtonDown("Jump"))
+            {
+                rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                doubleJumped = true;
+            }
+        }
+
         if (IsGrounded())
         {
+            doubleJumped = false;
             if (Input.GetButtonDown("Crouch"))
             {
                 //Allow dropping through platforms
@@ -119,6 +140,10 @@ public class PlayerMovement : MonoBehaviour
                 if (currentOneWayPlatform != null)
                     StartCoroutine(DisableCollision());
             }
+        }
+        else
+        {
+            if(jumped) canDoubleJump = true;
         }
     }
 

@@ -54,18 +54,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Analyzer Include="C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
-    <Analyzer Include="C:\Users\chenj\Level-Generation-Prototype\Library\PackageCache\com.unity.ext.nunit@1.0.6\net35\unity-custom\nunit.framework.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\LevelGen\RoomGenerator.cs" />
+    <Compile Include="Assets\Scripts\LevelGen\Room.cs" />
     <Compile Include="Assets\Scripts\MovingPlatform.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerCombat.cs" />
     <Compile Include="Assets\Scripts\DoorSwitch.cs" />
+    <Compile Include="Assets\Scripts\LevelGen\WallGenerator.cs" />
     <Compile Include="Assets\Scripts\Player\AnimatorManager.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
-    <Compile Include="Assets\Scripts\LevelGen\WallGenerator.cs" />
-    <Compile Include="Assets\Scripts\LevelGen\Room.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

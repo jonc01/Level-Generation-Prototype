@@ -2300,7 +2300,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &296164963
 Transform:
   m_ObjectHideFlags: 0
@@ -12317,6 +12317,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   DEBUGGING: 1
+  WallGen: {fileID: 0}
   StartRooms:
   - {fileID: 1388459937}
   Rooms:
@@ -12327,6 +12328,7 @@ MonoBehaviour:
   Shops: []
   GeneratedRooms: []
   shopAdded: 0
+  roomGenRunning: 0
   roomFoundUp: 0
   roomFoundLeft: 0
   roomFoundDown: 0
@@ -12343,10 +12345,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e34613bc10ddf1c42b4ba8d38be8734f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  DEBUGGING: 0
+  wallsGenerated: 0
   roomLayer:
     serializedVersion: 2
     m_Bits: 512
   GeneratedRooms: []
+  RoomGen: {fileID: 0}
   Walls:
   - {fileID: 1518539296}
   - {fileID: 783113095}

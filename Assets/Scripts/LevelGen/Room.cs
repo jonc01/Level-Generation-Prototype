@@ -8,9 +8,9 @@ public class Room : MonoBehaviour
     public bool isStart;
 
     [Header("Walls")]
-    public bool allWallsGenerated;
+    public bool wallsGenerated;
     [Space(10)]
-    public bool topWall;
+    public bool topWall; //These might not be needed, just use above
     public bool leftWall;
     public bool botWall;
     public bool rightWall;

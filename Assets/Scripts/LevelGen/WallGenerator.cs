@@ -19,7 +19,7 @@ public class WallGenerator : MonoBehaviour
     [SerializeField] GameObject[] Doors; //0: Bot, 1: Top, 2: Left, 3: Right
 
     [Header("Raycasts")]
-    RaycastHit2D checkUp;
+    RaycastHit2D checkUp; //rename roomUp
     RaycastHit2D checkLeft;
     RaycastHit2D checkDown;
     RaycastHit2D checkRight;
@@ -72,6 +72,11 @@ public class WallGenerator : MonoBehaviour
 
     void WallDoorCheck(Vector3 roomPos)
     {
+        //TODO: Tag check won't work, 
+        //
+
+
+
         //TODO: This should be run after all rooms/platforms are done being added first
         //TODO: Add all rooms into an array of transform positions, iterate through positions
         //      to run WallDoorCheck()
@@ -80,7 +85,7 @@ public class WallGenerator : MonoBehaviour
         {
             checkUp = Physics2D.Raycast(transform.position, Vector3.up, 3f, roomLayer);
             var RoomUp = checkUp.transform.gameObject.GetComponent<Room>();
-            if (RoomUp != null) GenerateDoor(0);
+            if (RoomUp != null) GenerateWall(0, false);
         }
         else GenerateWall(0);
 
@@ -88,7 +93,7 @@ public class WallGenerator : MonoBehaviour
         {
             checkLeft = Physics2D.Raycast(transform.position, Vector3.left, 5f, roomLayer);
             var RoomLeft = checkLeft.transform.gameObject.GetComponent<Room>();
-            if (RoomLeft != null) GenerateDoor(1);
+            if (RoomLeft != null) GenerateWall(1, false);
         }
         else GenerateWall(1);
 
@@ -96,7 +101,7 @@ public class WallGenerator : MonoBehaviour
         {
             checkDown = Physics2D.Raycast(transform.position, Vector3.down, 3f, roomLayer);
             var RoomDown = checkDown.transform.gameObject.GetComponent<Room>();
-            if (RoomDown != null) GenerateDoor(2);
+            if (RoomDown != null) GenerateWall(2, false);
         }
         else GenerateWall(2);
 
@@ -104,13 +109,14 @@ public class WallGenerator : MonoBehaviour
         {
             checkRight = Physics2D.Raycast(transform.position, Vector3.right, 5f, roomLayer);
             var RoomRight = checkRight.transform.gameObject.GetComponent<Room>();
-            if (RoomRight != null) GenerateDoor(3);
+            if (RoomRight != null) GenerateWall(3, false);
         }
         else GenerateWall(3);
     }
 
-    void GenerateWall(int direction)
+    void GenerateWall(int direction, bool isWall = true)
     {
+        //Get current position, adjust offset and Instantiate Wall
         float x = transform.position.x;
         float y = transform.position.y;
 
@@ -133,7 +139,8 @@ public class WallGenerator : MonoBehaviour
         }
         Vector3 newPos = new Vector3(x, y, 0);
 
-        Instantiate(Walls[direction], newPos, Quaternion.identity);
+        if(isWall) Instantiate(Walls[direction], newPos, Quaternion.identity);
+        else Instantiate(Doors[direction], newPos, Quaternion.identity);
 
         /*
         int randWall = Random.Range(0, 3); //If adding door location variants
