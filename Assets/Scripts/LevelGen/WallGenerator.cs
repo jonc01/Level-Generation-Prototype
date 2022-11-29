@@ -1,12 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WallGenerator : MonoBehaviour
 {
+    [Header("Variables")]
+    [SerializeField] private bool DEBUGGING;
+    [SerializeField] public bool wallsGenerated;
+
     [Header("References")]
     [SerializeField] LayerMask roomLayer;
     [SerializeField] Transform[] GeneratedRooms;
+    [SerializeField] RoomGenerator RoomGen;
 
     [Header("Components")]
     [SerializeField] GameObject[] Walls; //0: Bot, 1: Top, 2: Left, 3: Right
@@ -25,16 +31,37 @@ public class WallGenerator : MonoBehaviour
 
     private void Start()
     {
+        RoomGen = GetComponent<RoomGenerator>();
+        wallsGenerated = false;
+    }
 
+    private void Update()
+    {
+        if (RoomGen.roomGenRunning) return;
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            GenerateWallDoors();
+        }
+
+        if(DEBUGGING) DebugRaycast();
+        RoomConnectCheck();
     }
 
     public void GenerateWallDoors()
     {
+        StartCoroutine(GenerateWallDoorsCO());
+    }
+
+    IEnumerator GenerateWallDoorsCO()
+    {
         for (int i = 0; i < GeneratedRooms.Length; i++)
         {
-            WallDoorCheck(GeneratedRooms[i].position);
+            WallDoorCheck(RoomGen.GeneratedRooms[i].transform.position);
         }
         Debug.Log("Walls done");
+        yield return new WaitForSecondsRealtime(.1f);
+
+        wallsGenerated = true;
     }
 
     private void Move(Vector3 roomPos)
@@ -147,4 +174,28 @@ public class WallGenerator : MonoBehaviour
 
         Instantiate(Doors[direction], newPos, Quaternion.identity);
     }
+
+    #region Raycasts
+    private void RoomConnectCheck()
+    {
+        //bools
+        roomFoundUp = Physics2D.Raycast(transform.position, Vector3.up, 3f, roomLayer);
+        roomFoundLeft = Physics2D.Raycast(transform.position, Vector3.left, 5f, roomLayer);
+        roomFoundDown = Physics2D.Raycast(transform.position, Vector3.down, 3f, roomLayer);
+        roomFoundRight = Physics2D.Raycast(transform.position, Vector3.right, 5f, roomLayer);
+    }
+
+    private void DebugRaycast()
+    {
+        Vector3 up = transform.TransformDirection(Vector3.up) * 3f;
+        Vector3 left = transform.TransformDirection(Vector3.left) * 5f;
+        Vector3 down = transform.TransformDirection(Vector3.down) * 3f;
+        Vector3 right = transform.TransformDirection(Vector3.right) * 5f;
+
+        Debug.DrawRay(transform.position, up, Color.green);
+        Debug.DrawRay(transform.position, left, Color.green);
+        Debug.DrawRay(transform.position, down, Color.green);
+        Debug.DrawRay(transform.position, right, Color.green);
+    }
+    #endregion
 }
