@@ -8,6 +8,8 @@ TagManager:
   - Wall
   - Door
   - Room
+  - Wall/Door
+  - WallDoor
   layers:
   - Default
   - TransparentFX

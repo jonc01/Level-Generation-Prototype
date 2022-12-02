@@ -25,10 +25,10 @@ public class RoomGenerator : MonoBehaviour
 
     public bool roomGenRunning;
     //
-    [SerializeField] private bool roomFoundUp;
-    [SerializeField] private bool roomFoundLeft;
-    [SerializeField] private bool roomFoundDown;
-    [SerializeField] private bool roomFoundRight;
+    [SerializeField] public bool roomFoundUp;
+    [SerializeField] public bool roomFoundLeft;
+    [SerializeField] public bool roomFoundDown;
+    [SerializeField] public bool roomFoundRight;
 
     private int currRoom;
     private bool openSpaceFound;
@@ -102,9 +102,10 @@ public class RoomGenerator : MonoBehaviour
         }
         roomGenRunning = false;
 
-        WallGen.GenerateWallDoors();
+        ///////////////////////////////////TODO:
+        //WallGen.GenerateWallDoors();
         //Wait for walls to be generated
-        while (!WallGen.wallsGenerated) yield return null;
+        //while (!WallGen.wallGenDone) yield return null; //TODO: needs to allow starting
 
         Time.timeScale = 1;
     }
