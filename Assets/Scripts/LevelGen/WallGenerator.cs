@@ -225,13 +225,16 @@ public class WallGenerator : MonoBehaviour
 
         if (RoomGen.roomFoundRight) //RIGHT
         {
+            //Room found, Check if wall exists
             if (roomRightHit.collider != null) 
             {
+                //Wall layer collider hit
                 if(roomRightHit.collider.CompareTag("WallDoor")) Debug.Log("WallDoor found RIGHT"); //do nothing
+
             }
             else Debug.Log("No WallDoor RIGHT"); // Room found, but no wall / door BUILD DOOR
         }
-        else
+        else //No room found
         {
             //Build Wall
         }

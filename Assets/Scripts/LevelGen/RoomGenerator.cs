@@ -5,11 +5,10 @@ using UnityEngine;
 public class RoomGenerator : MonoBehaviour
 {
     [Header("Setup")]
-    [SerializeField] Vector3 startingRoom;
-    [SerializeField] int totalRooms;
+    public LevelBuilder Builder;
+    [SerializeField] WallGenerator WallGen;
     [SerializeField] LayerMask roomLayer;
     [SerializeField] bool DEBUGGING = true;
-    [SerializeField] WallGenerator WallGen;
 
     [Space(10)]
     [Header("Generator Components")]
@@ -35,15 +34,15 @@ public class RoomGenerator : MonoBehaviour
 
     private void Awake()
     {
-
+        Builder = GetComponent<LevelBuilder>();
     }
 
     private void Start()
     {
         WallGen = GetComponent<WallGenerator>();
         shopAdded = false; //Example
-        GeneratedRooms = new GameObject[totalRooms];
-        GenerateRooms();
+        GeneratedRooms = new GameObject[Builder.totalRooms];
+        //GenerateRooms(); //TODO: temp remove, should be called from/after WallGenerator
     }
 
     void Update()
@@ -76,7 +75,7 @@ public class RoomGenerator : MonoBehaviour
     IEnumerator GenerateRoomsCO()
     {
         roomGenRunning = true;
-        for (int i = 0; i < totalRooms; i++)
+        for (int i = 0; i < Builder.totalRooms; i++)
         {
             if (i > 0)
             {
