@@ -49,7 +49,7 @@ public class RoomGenerator : MonoBehaviour
     {
         if (DEBUGGING) {
             DebugRaycast();
-            if (Input.GetKeyDown(KeyCode.J)) DeleteRooms();
+            if (Input.GetKeyDown(KeyCode.O)) DeleteRooms();
         }
         //if (!roomGenRunning) return;
         RoomConnectCheck(); //Raycasts

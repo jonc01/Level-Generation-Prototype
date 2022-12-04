@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class LevelBuilder : MonoBehaviour
@@ -12,7 +11,7 @@ public class LevelBuilder : MonoBehaviour
 
     //Step 2) WallGenerator.cs
     //  a) Loop through RoomOrigins[]
-    //    a.1) For each room, Check each direction for an existing object with WallDoor tag
+    //    a.1) For each room, Check each direction for an existing object 
     //    a.2) Generate a Door if there is a bordering room
     //    a.3) else generate a Wall 
 
@@ -21,10 +20,11 @@ public class LevelBuilder : MonoBehaviour
     //    a.1) Place Start at [0], and Boss at last [RoomOrigins.Length]
     //    a.2) Make sure certain rooms are spawned as required (Start, Boss, Shops, Trials, etc)
 
-    [Header("Setup")]
+    [Header("Builder Setup")]
     [SerializeField] WallGenerator WallGen;
     [SerializeField] LayerMask buildLayer;
     [SerializeField] bool DEBUGGING = true;
+    [SerializeField] private Transform Level; //Must be separate object
 
     [Space(10)]
     [Header("Generator Components")]
@@ -46,30 +46,25 @@ public class LevelBuilder : MonoBehaviour
     private int currOrigin;
     private bool openDirFound;
 
-    private void Awake()
-    {
-
-    }
-
     private void Start()
     {
         WallGen = GetComponent<WallGenerator>();
         GeneratedOrigins = new GameObject[totalRooms];
-        //GenerateRooms(); //TODO: temp remove, should be called from/after WallGenerator
     }
 
     void Update()
     {
         if (DEBUGGING)
         {
-            DebugRaycast();
-            if (Input.GetKeyDown(KeyCode.J)) DeleteRooms();
+            if (!builderRunning)
+                if (Input.GetKeyDown(KeyCode.U)) DeleteOrigins();
         }
-        //if (!roomGenRunning) return;
-        RoomConnectCheck(); //Raycasts
+        if (WallGen.wallGenDone && !builderRunning) return; //Stop updating raycasts if not needed
+        OriginConnectCheck(); //Raycasts
+        DebugRaycast();
     }
 
-    private void DeleteRooms() //DEBUGGING
+    private void DeleteOrigins() //DEBUGGING
     {
         transform.position = new Vector3(0, 0, 0);
 
@@ -77,16 +72,17 @@ public class LevelBuilder : MonoBehaviour
         {
             Destroy(GeneratedOrigins[i]);
         }
-        Invoke("GenerateRooms", .1f);
+        Invoke("GenerateOrigins", .1f);
     }
 
-    void GenerateRooms()
+    void GenerateOrigins()
     {
+        Debug.Log("Generating Origins...");
         Time.timeScale = 0;
-        StartCoroutine(GenerateRoomsCO());
+        StartCoroutine(GenerateOriginsCO());
     }
 
-    IEnumerator GenerateRoomsCO()
+    IEnumerator GenerateOriginsCO()
     {
         builderRunning = true;
         for (int i = 0; i < totalRooms; i++)
@@ -99,16 +95,14 @@ public class LevelBuilder : MonoBehaviour
                     //Wait for space to be found
                     yield return null;
                 }
-                //Debug.Log("Open space found!");
                 yield return new WaitForSecondsRealtime(.01f);
-                int randRoom = Random.Range(0, 4);
-                GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity);
+                GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 currOrigin = 0;
                 openDirFound = false;
             }
             else
             {
-                GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity);
+                GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 startingRoom = transform.position;
                 yield return new WaitForSecondsRealtime(.01f); //0.001
             }
@@ -121,6 +115,7 @@ public class LevelBuilder : MonoBehaviour
         //Wait for walls to be generated
         //while (!WallGen.wallGenDone) yield return null; //TODO: needs to allow starting
 
+        Debug.Log("Origins Generated");
         Time.timeScale = 1;
     }
 
@@ -132,21 +127,18 @@ public class LevelBuilder : MonoBehaviour
     IEnumerator MoveCO()
     {
         //int direction = Random.Range(0, 4); //0, 1, 2, 3
-        int direction = ExistingRoomCheck();
+        int direction = ExistingOriginCheck();
         yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update
 
         while (direction == -1)
         {
-            Debug.Log("1 - Picking different room at: [" + currOrigin + "]");
             //yield return new WaitForSecondsRealtime(.01f);
-
-            Debug.Log("Random Room: " + GeneratedOrigins[currOrigin].name + " at " + GeneratedOrigins[currOrigin].transform.position);
             Vector3 newPos = GeneratedOrigins[currOrigin].transform.position;
 
             transform.position = newPos;
 
             yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update
-            direction = ExistingRoomCheck();
+            direction = ExistingOriginCheck();
 
             if (direction != -1) break;
             currOrigin++;
@@ -180,40 +172,37 @@ public class LevelBuilder : MonoBehaviour
                 Debug.Log("Error in Move() Random.Range");
                 break;
         }
-        //WallDoorCheck();
     }
 
-    private int ExistingRoomCheck()
+    private int ExistingOriginCheck()
     {
-        //Builder picks a random direction, if room exists, pick another direction.
-        //Return all open directions, random.range from remaining directions.
-        //If a room is surrounded, then move Builder to a previous room, and check for opening.
-
+        //Compile list of open directions
         List<int> openDirections = new List<int>();
         if (!originFoundUp) openDirections.Add(0);
         if (!originFoundLeft) openDirections.Add(1);
         if (!originFoundDown) openDirections.Add(2);
         if (!originFoundRight) openDirections.Add(3);
 
-        Debug.Log("Rooms Found: " + originFoundUp + originFoundLeft + originFoundDown + originFoundRight);
+        //Debug.Log("Origins Found: " + originFoundUp + originFoundLeft + originFoundDown + originFoundRight);
 
+        //Of all open directions, return random direction.
         if (openDirections.Count > 0)
         {
             int j = Random.Range(0, openDirections.Count);
             int dir = openDirections[j];
-            Debug.Log("Selected Direction: " + dir);
             openDirections.Clear();
             return dir;
         }
-        Debug.Log("No open directions.");
+        //If a origin is surrounded, then move Builder to a previous origin transform, and check for opening.
+        //Debug.Log("No open directions.");
         return -1;
     }
 
     #region Raycasts
 
-    private void RoomConnectCheck()
+    private void OriginConnectCheck()
     {
-        //bools
+        //Bools to check if origins exist in each direction of current position
         originFoundUp = Physics2D.Raycast(transform.position, Vector3.up, 3f, buildLayer);
         originFoundLeft = Physics2D.Raycast(transform.position, Vector3.left, 5f, buildLayer);
         originFoundDown = Physics2D.Raycast(transform.position, Vector3.down, 3f, buildLayer);
