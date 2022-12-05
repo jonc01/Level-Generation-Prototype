@@ -21,9 +21,10 @@ public class LevelBuilder : MonoBehaviour
     //    a.2) Make sure certain rooms are spawned as required (Start, Boss, Shops, Trials, etc)
 
     [Header("Builder Setup")]
-    [SerializeField] WallGenerator WallGen;
-    [SerializeField] LayerMask buildLayer;
     [SerializeField] bool DEBUGGING = true;
+    [SerializeField] WallGenerator WallGen;
+    [SerializeField] RoomGenerator RoomGen;
+    [SerializeField] public LayerMask buildLayer;
     [SerializeField] private Transform Level; //Must be separate object
 
     [Space(10)]
@@ -49,6 +50,7 @@ public class LevelBuilder : MonoBehaviour
     private void Start()
     {
         WallGen = GetComponent<WallGenerator>();
+        RoomGen = GetComponent<RoomGenerator>();
         GeneratedOrigins = new GameObject[totalRooms];
     }
 
@@ -72,30 +74,45 @@ public class LevelBuilder : MonoBehaviour
         {
             Destroy(GeneratedOrigins[i]);
         }
-        Invoke("GenerateOrigins", .1f);
+        Invoke("StartLevelGen", .1f);
     }
 
-    void GenerateOrigins()
+    void StartLevelGen()
     {
-        Debug.Log("Generating Origins...");
-        Time.timeScale = 0;
-        StartCoroutine(GenerateOriginsCO());
+        StartCoroutine(LevelGenCO());
+    }
+
+    IEnumerator LevelGenCO()
+    {
+        Time.timeScale = 0; //Pause all game function
+        //*All coroutines related to level generation need to use WaitForSecondsRealtime if timeScale is 0
+
+        //Generate Origins first
+        yield return StartCoroutine(GenerateOriginsCO());
+
+        //Start Wall generation
+        WallGen.GenerateWallDoors();
+        while (!WallGen.wallGenDone) yield return null;
+
+        //Start Room generation
+        RoomGen.GenerateRooms();
+        while(!RoomGen.roomGenDone) yield return null;
+
+        Time.timeScale = 1;
     }
 
     IEnumerator GenerateOriginsCO()
     {
+        Debug.Log("Generating Origins...");
         builderRunning = true;
         for (int i = 0; i < totalRooms; i++)
         {
             if (i > 0)
             {
                 Move();
-                while (!openDirFound)
-                {
-                    //Wait for space to be found
-                    yield return null;
-                }
-                yield return new WaitForSecondsRealtime(.01f);
+                while (!openDirFound) yield return null; //Wait for space to be found in Move()
+                
+                yield return new WaitForSecondsRealtime(.01f); //.01
                 GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 currOrigin = 0;
                 openDirFound = false;
@@ -104,19 +121,15 @@ public class LevelBuilder : MonoBehaviour
             {
                 GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 startingRoom = transform.position;
-                yield return new WaitForSecondsRealtime(.01f); //0.001
+                yield return new WaitForSecondsRealtime(.01f); //0.001 //.01
             }
         }
         endRoom = transform.position;
+
         builderRunning = false;
 
-        ///////////////////////////////////TODO:
-        //WallGen.GenerateWallDoors();
-        //Wait for walls to be generated
-        //while (!WallGen.wallGenDone) yield return null; //TODO: needs to allow starting
-
+        yield return new WaitForSecondsRealtime(.1f);
         Debug.Log("Origins Generated");
-        Time.timeScale = 1;
     }
 
     private void Move()
@@ -126,13 +139,11 @@ public class LevelBuilder : MonoBehaviour
 
     IEnumerator MoveCO()
     {
-        //int direction = Random.Range(0, 4); //0, 1, 2, 3
         int direction = ExistingOriginCheck();
         yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update
 
         while (direction == -1)
         {
-            //yield return new WaitForSecondsRealtime(.01f);
             Vector3 newPos = GeneratedOrigins[currOrigin].transform.position;
 
             transform.position = newPos;
@@ -153,6 +164,7 @@ public class LevelBuilder : MonoBehaviour
         //   2 -Y
         float x = transform.position.x;
         float y = transform.position.y;
+
         //Update Builder transform
         switch (direction)
         {
