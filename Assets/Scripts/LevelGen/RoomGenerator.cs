@@ -33,9 +33,6 @@ public class RoomGenerator : MonoBehaviour
 
     public bool roomGenRunning;
     public bool roomGenDone;
-    //
-    private int currRoom;
-
 
     private void Start()
     {
@@ -55,6 +52,7 @@ public class RoomGenerator : MonoBehaviour
 
     public void GenerateRooms()
     {
+        Debug.Log("Generating Rooms...");
         StartCoroutine(GenerateRoomsCO());
     }
 
@@ -110,10 +108,11 @@ public class RoomGenerator : MonoBehaviour
             
             int rand = Random.Range(0, Rooms.Length);
 
-            CreateRoom(Rooms[rand], i); //TESTING
+            CreateRoom(Rooms[rand], i);
         }
         roomGenRunning = false;
         roomGenDone = true;
+        Debug.Log("Rooms Generated");
     }
 
     private void CreateRoom(GameObject roomObj, int roomIndex)

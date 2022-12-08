@@ -195,8 +195,6 @@ public class LevelBuilder : MonoBehaviour
         if (!originFoundDown) openDirections.Add(2);
         if (!originFoundRight) openDirections.Add(3);
 
-        //Debug.Log("Origins Found: " + originFoundUp + originFoundLeft + originFoundDown + originFoundRight);
-
         //Of all open directions, return random direction.
         if (openDirections.Count > 0)
         {
