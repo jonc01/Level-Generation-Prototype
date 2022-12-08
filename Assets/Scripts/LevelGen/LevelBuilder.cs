@@ -21,11 +21,15 @@ public class LevelBuilder : MonoBehaviour
     //    a.2) Make sure certain rooms are spawned as required (Start, Boss, Shops, Trials, etc)
 
     [Header("Builder Setup")]
-    [SerializeField] bool DEBUGGING = true;
+    [SerializeField] public bool DEBUGGING = true;
     [SerializeField] WallGenerator WallGen;
     [SerializeField] RoomGenerator RoomGen;
     [SerializeField] public LayerMask buildLayer;
     [SerializeField] private Transform Level; //Must be separate object
+
+    [Header("TESTING")]
+    [SerializeField] GameObject BoundingWalls;
+    [SerializeField] GameObject DebuggingSquare;
 
     [Space(10)]
     [Header("Generator Components")]
@@ -56,15 +60,18 @@ public class LevelBuilder : MonoBehaviour
 
     void Update()
     {
-        if (DEBUGGING)
+        /*if (DEBUGGING)
         {
             if (!builderRunning)
-                if (Input.GetKeyDown(KeyCode.U)) DeleteOrigins();
-        }
+                if (Input.GetKeyDown(KeyCode.Space)) DeleteOrigins();
+        }*/
         if (WallGen.wallGenDone && !builderRunning) return; //Stop updating raycasts if not needed
+        
         OriginConnectCheck(); //Raycasts
         DebugRaycast();
     }
+
+    public void ToggleDebuggingMode() { DEBUGGING = !DEBUGGING; }
 
     private void DeleteOrigins() //DEBUGGING
     {
@@ -74,21 +81,30 @@ public class LevelBuilder : MonoBehaviour
         {
             Destroy(GeneratedOrigins[i]);
         }
-        Invoke("StartLevelGen", .1f);
+        //Invoke("StartLevelGen", .1f);
     }
 
-    void StartLevelGen()
+    public void StartLevelGen()
     {
+        if (builderRunning) return;
+        DeleteOrigins();
+        if (BoundingWalls != null) BoundingWalls.SetActive(true);
+        GeneratedOrigins = new GameObject[totalRooms];
         StartCoroutine(LevelGenCO());
     }
 
     IEnumerator LevelGenCO()
     {
+        builderRunning = true;
         Time.timeScale = 0; //Pause all game function
         //*All coroutines related to level generation need to use WaitForSecondsRealtime if timeScale is 0
 
         //Generate Origins first
         yield return StartCoroutine(GenerateOriginsCO());
+
+        if(BoundingWalls != null) BoundingWalls.SetActive(false);
+        yield return new WaitForSecondsRealtime(.001f); //0.5f
+        if(DEBUGGING) yield return new WaitForSecondsRealtime(.5f);
 
         //Start Wall generation
         WallGen.GenerateWallDoors();
@@ -98,13 +114,17 @@ public class LevelBuilder : MonoBehaviour
         RoomGen.GenerateRooms();
         while(!RoomGen.roomGenDone) yield return null;
 
+        if (DebuggingSquare != null) DebuggingSquare.SetActive(false);
+        builderRunning = false;
         Time.timeScale = 1;
     }
 
     IEnumerator GenerateOriginsCO()
     {
         Debug.Log("Generating Origins...");
-        builderRunning = true;
+
+        if (DebuggingSquare != null) DebuggingSquare.SetActive(true);
+
         for (int i = 0; i < totalRooms; i++)
         {
             if (i > 0)
@@ -112,7 +132,7 @@ public class LevelBuilder : MonoBehaviour
                 Move();
                 while (!openDirFound) yield return null; //Wait for space to be found in Move()
                 
-                yield return new WaitForSecondsRealtime(.01f); //.01
+                yield return new WaitForSecondsRealtime(.001f); //.01
                 GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 currOrigin = 0;
                 openDirFound = false;
@@ -121,14 +141,13 @@ public class LevelBuilder : MonoBehaviour
             {
                 GeneratedOrigins[i] = Instantiate(originObj, transform.position, Quaternion.identity, Level);
                 startingRoom = transform.position;
-                yield return new WaitForSecondsRealtime(.01f); //0.001 //.01
+                yield return new WaitForSecondsRealtime(.001f); //0.001 //.01
             }
+            if (DEBUGGING) yield return new WaitForSecondsRealtime(.1f);
         }
         endRoom = transform.position;
 
-        builderRunning = false;
-
-        yield return new WaitForSecondsRealtime(.1f);
+        yield return new WaitForSecondsRealtime(.001f);
         Debug.Log("Origins Generated");
     }
 
@@ -140,7 +159,7 @@ public class LevelBuilder : MonoBehaviour
     IEnumerator MoveCO()
     {
         int direction = ExistingOriginCheck();
-        yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update
+        yield return new WaitForSecondsRealtime(.001f); //Delay needed for raycasts to update
 
         while (direction == -1)
         {
@@ -148,7 +167,7 @@ public class LevelBuilder : MonoBehaviour
 
             transform.position = newPos;
 
-            yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update
+            yield return new WaitForSecondsRealtime(.001f); //Delay needed for raycasts to update
             direction = ExistingOriginCheck();
 
             if (direction != -1) break;
@@ -156,7 +175,7 @@ public class LevelBuilder : MonoBehaviour
 
             yield return null;
         }
-        yield return new WaitForSecondsRealtime(.01f);
+        yield return new WaitForSecondsRealtime(.001f);
         openDirFound = true;
 
         //   0 +Y

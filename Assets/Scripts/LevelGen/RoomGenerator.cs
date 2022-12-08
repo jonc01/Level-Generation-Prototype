@@ -84,9 +84,10 @@ public class RoomGenerator : MonoBehaviour
             int randShop = Random.Range(0, totalShops); //Pick random shop from array of variations
             int randIndex = Random.Range(0, availableIndexes.Count);
             CreateRoom(Shops[randShop], availableIndexes[randIndex]);
+            if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         }
 
-        yield return new WaitForSecondsRealtime(.01f);
+        yield return new WaitForSecondsRealtime(.001f);
 
         //Create Trial(s)
         int totalTrials = Random.Range(numTrials - totalTrialsDeviation, numTrials + totalTrialsDeviation);
@@ -95,9 +96,10 @@ public class RoomGenerator : MonoBehaviour
             int randTrial = Random.Range(0, totalTrials);
             int randIndex = Random.Range(0, availableIndexes.Count);
             CreateRoom(Trials[randTrial], availableIndexes[randIndex]);
+            if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         }
 
-        yield return new WaitForSecondsRealtime(.01f);
+        yield return new WaitForSecondsRealtime(.001f);
 
         //Create normal rooms in remaining origins
         //Clear out list as we go
@@ -107,8 +109,8 @@ public class RoomGenerator : MonoBehaviour
             //yield return new WaitForSecondsRealtime(.01f); //0.001
             
             int rand = Random.Range(0, Rooms.Length);
-
             CreateRoom(Rooms[rand], i);
+            if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         }
         roomGenRunning = false;
         roomGenDone = true;

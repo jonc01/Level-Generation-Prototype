@@ -67,7 +67,8 @@ public class WallGenerator : MonoBehaviour
             //Move to origin at index
             currOrigin = Builder.GeneratedOrigins[i].transform;
             transform.position = currOrigin.position;
-            yield return new WaitForSecondsRealtime(.01f); //Delay needed for raycasts to update to new position
+            yield return new WaitForSecondsRealtime(.001f); //Delay needed for raycasts to update to new position
+            if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.1f);
 
             WallDoorCheck(); //Start building CO
 
@@ -76,7 +77,7 @@ public class WallGenerator : MonoBehaviour
         }
         wallGenRunning = false;
 
-        yield return new WaitForSecondsRealtime(.01f);
+        yield return new WaitForSecondsRealtime(.001f);
         Debug.Log("Walls Generated");
         wallGenDone = true;
     }
@@ -102,12 +103,16 @@ public class WallGenerator : MonoBehaviour
 
         if (!wallFoundUp) GenerateWallDoor(0, !Builder.originFoundUp);
         else upChecked = true;
+        if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         if (!wallFoundLeft) GenerateWallDoor(1, !Builder.originFoundLeft);
         else leftChecked = true;
+        if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         if (!wallFoundDown) GenerateWallDoor(2, !Builder.originFoundDown);
         else downChecked = true;
+        if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
         if (!wallFoundRight) GenerateWallDoor(3, !Builder.originFoundRight);
         else rightChecked = true;
+        if (Builder.DEBUGGING) yield return new WaitForSecondsRealtime(.05f);
 
         while (!upChecked && !leftChecked && !downChecked && !rightChecked) yield return null;
         
