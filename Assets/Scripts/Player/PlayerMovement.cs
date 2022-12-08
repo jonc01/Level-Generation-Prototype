@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.VFX;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -11,6 +13,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] bool showGizmos = false;
+    [SerializeField] VFXManager vfx;
+    [SerializeField] Transform vfxOffset;
 
     [Space(10)]
     //Controls
@@ -19,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     //Drop-through platforms
-    private GameObject currentOneWayPlatform;
+    [SerializeField] private GameObject currentOneWayPlatform;
     [SerializeField] public bool canDropThrough;
     [SerializeField] private BoxCollider2D playerCollider;
 
@@ -44,6 +48,7 @@ public class PlayerMovement : MonoBehaviour
     private float timeSpentFalling;
     [SerializeField] private float landingAnimThreshold = 0.1f; //How long player needs to fall to play landing animation
     public bool canPlayLanding;
+    private bool playingLandFX;
 
     //Dodge
     public bool canDash = true;
@@ -54,6 +59,13 @@ public class PlayerMovement : MonoBehaviour
     private float originalGravity;
     //Coroutine DashCO;
 
+    //Double Jump
+    [SerializeField] private bool canDoubleJump;
+    [SerializeField] private bool doubleJumped;
+
+    private float runTimer;
+    private float runFXCD = .3f;
+
     //Float
     [SerializeField] bool isFloating;
     Coroutine FloatCO;
@@ -62,11 +74,14 @@ public class PlayerMovement : MonoBehaviour
     {
         playerCollider = GetComponent<BoxCollider2D>();
 
+        canDoubleJump = false;
+        doubleJumped = false;
         allowInput = true;
         canMove = true;
         canAirMove = true;
         jumped = false;
         canDash = true;
+        playingLandFX = false;
         isFloating = false;
         originalGravity = rb.gravityScale; //For Dash and Float
         timeSinceLeftGround = 0;
@@ -97,12 +112,17 @@ public class PlayerMovement : MonoBehaviour
         Flip();
 
         //Variable jump heights
-        if (Input.GetButtonDown("Jump") && !jumped)
+        if (Input.GetButtonDown("Jump"))
         {
-            if (IsGrounded() || coyoteAllowed)
+            if (!jumped)
             {
-                jumped = true;
-                rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                if (IsGrounded() || coyoteAllowed)
+                {
+                    vfx.SpawnJumpVFX(vfxOffset);
+                    jumped = true;
+                    rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                    canDoubleJump = true;
+                }
             }
         }
         if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
@@ -110,15 +130,34 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
         }
 
+        //Double Jump
+        if (canDoubleJump && !doubleJumped)
+        {
+            if (Input.GetButtonDown("Jump"))
+            {
+                vfx.SpawnJumpVFX(vfxOffset);
+                rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
+                doubleJumped = true;
+            }
+        }
+
         if (IsGrounded())
         {
+            doubleJumped = false;
             if (Input.GetButtonDown("Crouch"))
             {
                 //Allow dropping through platforms
                 if (!canDropThrough) return;
                 if (currentOneWayPlatform != null)
                     StartCoroutine(DisableCollision());
+
             }
+            CheckRunVFX();
+        }
+        else
+        {
+            runTimer = 0;
+            if(jumped) canDoubleJump = true;
         }
     }
 
@@ -173,6 +212,7 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("OneWayPlatform"))
         {
             currentOneWayPlatform = collision.gameObject;
+            canDropThrough = true;
         }
     }
 
@@ -181,12 +221,14 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("OneWayPlatform"))
         {
             currentOneWayPlatform = null;
-            canDropThrough = true;
+            canDropThrough = false;
         }
     }
 
     private IEnumerator DisableCollision()
     {
+        //If player lands on another OneWayPlatform before this Coroutine ends
+        //player can't drop-through until jumping again
         BoxCollider2D platformCollider = currentOneWayPlatform.GetComponent<BoxCollider2D>();
 
         Physics2D.IgnoreCollision(playerCollider, platformCollider);
@@ -222,6 +264,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (isFalling)
             {
+                if (!playingLandFX) StartCoroutine(LandingFX());
                 //Only play animation if falling longer than .1s
                 if (canPlayLanding)
                     StartCoroutine(FalltoLandAnim());
@@ -236,6 +279,29 @@ public class PlayerMovement : MonoBehaviour
             //isFalling = true;
             canPlayLanding = false;
             CheckFallAnim();
+        }
+    }
+
+    IEnumerator LandingFX()
+    {
+        //This needs a cooldown, or it instantiates multiple times
+        playingLandFX = true;
+        yield return new WaitForSeconds(.05f); //short delay to prevent offset being pushed through ground on land
+        if (vfx != null) vfx.SpawnJumpVFX(vfxOffset); //Reusing Land/Jump
+        yield return new WaitForSeconds(.3f);
+        playingLandFX = false;
+    }
+
+    void CheckRunVFX()
+    {
+        if (horizontal != 0) runTimer += Time.deltaTime;
+        else runTimer = .25f; //resetting to allow FX
+
+        if (vfx == null) return;
+        if (IsGrounded() && runTimer > runFXCD)
+        {
+            vfx.SpawnRunVFX(vfxOffset, isFacingRight);
+            runTimer = 0;
         }
     }
 
