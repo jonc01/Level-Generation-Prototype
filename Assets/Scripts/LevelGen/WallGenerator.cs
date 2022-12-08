@@ -26,6 +26,11 @@ public class WallGenerator : MonoBehaviour
     [SerializeField] bool wallFoundDown;
     [SerializeField] bool wallFoundRight;
 
+    RaycastHit2D getWallUp;
+    RaycastHit2D getWallLeft;
+    RaycastHit2D getWallDown;
+    RaycastHit2D getWallRight;
+
     //Coroutine yield variables
     [SerializeField] private bool upChecked;
     [SerializeField] private bool leftChecked;
@@ -40,11 +45,6 @@ public class WallGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (wallGenDone && !wallGenRunning)
-        {
-            //TODO: RoomGen.GenerateRooms
-        }
-
         if (!wallGenRunning) return; //Stop updating raycasts if not needed
         RoomConnectRaycastCheck();
         DebugRaycast();
@@ -75,6 +75,7 @@ public class WallGenerator : MonoBehaviour
             while (buildingWallsDoors) yield return null;
         }
         wallGenRunning = false;
+
         yield return new WaitForSecondsRealtime(.01f);
         Debug.Log("Walls Generated");
         wallGenDone = true;

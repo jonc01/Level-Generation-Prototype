@@ -8,6 +8,14 @@ public class RoomGenerator : MonoBehaviour
     [SerializeField] bool DEBUGGING = true;
     public LevelBuilder Builder;
 
+    [Header("Shops")]
+    public int numShops = 2;
+    [SerializeField] int totalShopDeviation = 1;
+
+    [Header("Trials")]
+    public int numTrials = 1;
+    [SerializeField] int totalTrialsDeviation = 0;
+
     [Space(10)]
     [Header("Generator Components")]
     [SerializeField] GameObject BossRoom;
@@ -18,11 +26,10 @@ public class RoomGenerator : MonoBehaviour
     [SerializeField] GameObject[] Trials;
 
     [Header("--- Populated at Generation ---")]
-    //TODO: remove
+    [SerializeField] List<int> availableIndexes;
 
     [Header("Variables")]
     //[SerializeField] bool shopAdded; //Shop Types: General, Attack Items, Defense Items, Healing Items
-    public int numShops;
 
     public bool roomGenRunning;
     public bool roomGenDone;
@@ -35,6 +42,7 @@ public class RoomGenerator : MonoBehaviour
         Builder = GetComponent<LevelBuilder>();
         roomGenDone = false;
 
+        availableIndexes = new List<int>();
         //shopAdded = false; //Example
     }
 
@@ -54,32 +62,65 @@ public class RoomGenerator : MonoBehaviour
     {
         roomGenDone = false;
         roomGenRunning = true;
-        for (int i = 0; i < Builder.totalRooms; i++)
+
+        //Assigning origin indexes to specific rooms
+        int totalRooms = Builder.totalRooms;
+        int bossRoomIndex = Builder.GeneratedOrigins.Length - 1;
+
+        //List Setup, Keep track of available indexes
+        //availableIndexes = new List<int>();
+        for(int i=0; i<totalRooms; i++)
         {
-            Transform currOrigin = Builder.GeneratedOrigins[i].transform;
-            if (i == 0) //Starting Room
-            {
-                int startRoom = Random.Range(0, StartRooms.Length);
-                //Transform currOrigin = Builder.GeneratedOrigins[i].transform;
-                Instantiate(StartRooms[startRoom], currOrigin.position, Quaternion.identity, currOrigin);
-                yield return new WaitForSecondsRealtime(.01f); //0.001
-            }
-            else if (i == Builder.GeneratedOrigins.Length-1) //Ending/Boss Room
-            {
-                Instantiate(BossRoom, currOrigin.position, Quaternion.identity, currOrigin);
-            }
-            else
-            {
-                int rand = Random.Range(0, Rooms.Length);
-                Instantiate(Rooms[rand], currOrigin.position, Quaternion.identity, currOrigin);
-                //Debug.Log("Open space found!");
-                /*yield return new WaitForSecondsRealtime(.01f);
-                int randRoom = Random.Range(0, 4);
-                Instantiate(Rooms[randRoom], transform.position, Quaternion.identity);
-                currRoom = 0;*/
-            }
+            availableIndexes.Add(i);
+        }
+
+        //Reserve first and last index for Starting and Boss room
+        CreateRoom(StartRooms[0], 0); //TODO: randomize StartRooms if multiple
+        CreateRoom(BossRoom, bossRoomIndex);
+
+
+        //Create Shops
+        int totalShops = Random.Range(numShops, numShops + totalShopDeviation);
+        for(int i = 0; i < totalShops; i++)
+        {
+            int randShop = Random.Range(0, totalShops); //Pick random shop from array of variations
+            int randIndex = Random.Range(0, availableIndexes.Count);
+            CreateRoom(Shops[randShop], availableIndexes[randIndex]);
+        }
+
+        yield return new WaitForSecondsRealtime(.01f);
+
+        //Create Trial(s)
+        int totalTrials = Random.Range(numTrials - totalTrialsDeviation, numTrials + totalTrialsDeviation);
+        for(int i = 0; i < totalTrials; i++) //Reserve indexes for Trials
+        {
+            int randTrial = Random.Range(0, totalTrials);
+            int randIndex = Random.Range(0, availableIndexes.Count);
+            CreateRoom(Trials[randTrial], availableIndexes[randIndex]);
+        }
+
+        yield return new WaitForSecondsRealtime(.01f);
+
+        //Create normal rooms in remaining origins
+        //Clear out list as we go
+        while(availableIndexes.Count > 0)
+        {
+            int i = availableIndexes[0];
+            //yield return new WaitForSecondsRealtime(.01f); //0.001
+            
+            int rand = Random.Range(0, Rooms.Length);
+
+            CreateRoom(Rooms[rand], i); //TESTING
         }
         roomGenRunning = false;
         roomGenDone = true;
+    }
+
+    private void CreateRoom(GameObject roomObj, int roomIndex)
+    {
+        //Instantiate GameObject at index transform, remove that index from the list
+        Transform currRoom = Builder.GeneratedOrigins[roomIndex].transform;
+        Instantiate(roomObj, currRoom.position, Quaternion.identity, currRoom);
+        availableIndexes.Remove(roomIndex);
     }
 }

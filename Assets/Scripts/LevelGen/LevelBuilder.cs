@@ -93,7 +93,7 @@ public class LevelBuilder : MonoBehaviour
         //Start Wall generation
         WallGen.GenerateWallDoors();
         while (!WallGen.wallGenDone) yield return null;
-
+        
         //Start Room generation
         RoomGen.GenerateRooms();
         while(!RoomGen.roomGenDone) yield return null;
