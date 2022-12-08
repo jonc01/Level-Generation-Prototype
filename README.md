@@ -1,4 +1,4 @@
-# Level-Generation-Prototype
+# Level Generation Prototype
 
 ### LevelBuilder.cs
 - Places an Origin object (Transform + Collider) at the Builder location, the Builder is moved afterwards
