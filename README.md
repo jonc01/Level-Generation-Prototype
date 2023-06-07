@@ -1,6 +1,6 @@
 # Level Generation Prototype
 
-###[Web Demo](https://jongamedev.itch.io/level-generation-prototype?secret=L9M5bJ1y4MZm5PhPhqLEPzJ9CE)
+### [Web Demo](https://jongamedev.itch.io/level-generation-prototype?secret=L9M5bJ1y4MZm5PhPhqLEPzJ9CE)
 
 ### LevelBuilder.cs
 - Places an Origin object (Transform + Collider) at the Builder location, the Builder is moved afterwards
